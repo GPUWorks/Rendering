@@ -6,8 +6,8 @@
 # You should have received a copy of the MPL along with this library; see the 
 # file LICENSE. If not, you can obtain one at http://mozilla.org/MPL/2.0/.
 #
-cmake_minimum_required(VERSION 3.1.0)
-project(Rendering VERSION 0.2.0)
+cmake_minimum_required(VERSION 3.11.0)
+project(Rendering VERSION 0.3.0)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -88,22 +88,22 @@ target_link_libraries(Rendering LINK_PUBLIC Util)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Dependency to an OpenGL implementation
-find_package(GLImplementation REQUIRED)
+include(FetchGL)
 target_compile_definitions(Rendering PRIVATE "${GLIMPLEMENTATION_DEFINITIONS}")
 target_include_directories(Rendering PRIVATE ${GLIMPLEMENTATION_INCLUDE_DIRS})
 target_link_libraries(Rendering LINK_PRIVATE ${GLIMPLEMENTATION_LIBRARIES})
 
+if(WIN32)
+	# copy dlls to build folder
+	add_custom_command(TARGET Rendering POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${GLEW_LIBRARIES} $<TARGET_FILE_DIR:Rendering>)
+endif()
+
 # Set version of library
-set_target_properties(Rendering PROPERTIES VERSION ${RENDERING_VERSION}
-                                           SOVERSION ${RENDERING_VERSION_MAJOR})
-                                           
+set_target_properties(Rendering PROPERTIES VERSION ${RENDERING_VERSION} SOVERSION ${RENDERING_VERSION_MAJOR})
+                                         
 add_subdirectory(tests)
 
 # Install the header files
-file(GLOB RENDERING_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/CL/*.h")
-install(FILES ${RENDERING_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Rendering/CL COMPONENT headers)
-file(GLOB RENDERING_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/CL/Memory/*.h")
-install(FILES ${RENDERING_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Rendering/CL/Memory COMPONENT headers)
 file(GLOB RENDERING_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/Mesh/*.h")
 install(FILES ${RENDERING_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Rendering/Mesh COMPONENT headers)
 file(GLOB RENDERING_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/MeshUtils/*.h")
@@ -149,7 +149,7 @@ write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/RenderingConfigVers
 # Install the configuration files
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RenderingConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/RenderingConfigVersion.cmake
 		DESTINATION ${CMAKE_INSTALL_CMAKECONFIGDIR} COMPONENT developmentlibraries)
-
+		
 # Packaging
 include(InstallRequiredSystemLibraries)
 
